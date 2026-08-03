@@ -1,0 +1,12 @@
+{
+  "name": "querycraft-backend",
+  "version": "1.0.0",
+  "description": "Backend for QueryCraft",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
