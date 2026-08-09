@@ -19,9 +19,11 @@ app.use(morgan('dev'));
 
 const authRoutes = require('./routes/authRoutes');
 const connectionRoutes = require('./routes/connectionRoutes');
+const queryRoutes = require('./routes/queryRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/connections', connectionRoutes);
+app.use('/api/query', queryRoutes);
 
 // Basic health check route
 app.get('/api/health', (req, res) => {
