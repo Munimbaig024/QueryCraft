@@ -1,4 +1,6 @@
 const Groq = require('groq-sdk');
+const { getSqlGenerationPrompt } = require('../utils/promptTemplates');
+const { parseLlmResponse } = require('../utils/sqlParser');
 
 // Initialize Groq client
 const groq = new Groq({
@@ -13,19 +15,7 @@ const groq = new Groq({
  */
 const generateSQLFromPrompt = async (prompt, schemaContext) => {
   try {
-    const systemMessage = `You are an expert SQL assistant. Your job is to convert natural language into a secure, optimized SQL query based on the provided database schema. 
-Return ONLY a valid JSON object in the following format:
-{
-  "sql": "SELECT ...",
-  "visualization": "table" // recommend one of: table, bar, line, pie
-}
-Do not include any markdown formatting, explanation, or conversational text.`;
-
-    const userMessage = `Schema:
-${schemaContext}
-
-User Request:
-${prompt}`;
+    const { systemMessage, userMessage } = getSqlGenerationPrompt(schemaContext, prompt);
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
@@ -43,7 +33,7 @@ ${prompt}`;
       throw new Error('No response from LLM');
     }
 
-    return JSON.parse(responseContent);
+    return parseLlmResponse(responseContent);
   } catch (error) {
     console.error('LLM Generation Error:', error);
     throw new Error('Failed to generate SQL from prompt');
