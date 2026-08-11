@@ -27,6 +27,14 @@ const generateQuery = async (req, res) => {
     // 3. Pass to LLM to generate SQL
     const generated = await generateSQLFromPrompt(prompt, schemaContext);
 
+    // 4. Validate that the LLM actually produced something meaningful
+    if (!generated || !generated.sql || generated.sql.trim() === ';') {
+      return res.status(422).json({ 
+        success: false, 
+        message: 'The AI could not generate a valid SQL query from your prompt. Please try rephrasing.' 
+      });
+    }
+
     // Return the generated SQL and visualization recommendation
     res.status(200).json({
       success: true,

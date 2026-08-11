@@ -30,10 +30,14 @@ const parseLlmResponse = (llmResponse) => {
       visualization: parsed.visualization || 'table',
     };
   } catch (error) {
-    console.error('Failed to parse JSON from LLM:', error);
-    // Fallback if the LLM didn't return valid JSON
+    console.error('Failed to parse JSON from LLM, attempting regex fallback:', error.message);
+    
+    // Fallback: Try to extract SQL if the LLM included it in markdown blocks alongside conversational text
+    const sqlMatch = llmResponse.match(/```sql([\s\S]*?)```/i);
+    let extractedSql = sqlMatch ? sqlMatch[1] : llmResponse;
+    
     return {
-      sql: cleanSqlOutput(llmResponse),
+      sql: cleanSqlOutput(extractedSql),
       visualization: 'table',
     };
   }
