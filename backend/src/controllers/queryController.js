@@ -1,4 +1,5 @@
 const Connection = require('../models/Connection');
+const QueryHistory = require('../models/QueryHistory');
 const { introspectDatabase } = require('../utils/schemaIntrospection');
 const { generateSQLFromPrompt } = require('../services/llmService');
 const { executeQuery } = require('../services/queryEngine');
@@ -51,8 +52,13 @@ const generateQuery = async (req, res) => {
 // @route   POST /api/query/execute
 // @access  Private
 const executeQueryEndpoint = async (req, res) => {
+  let success = false;
+  let executionTimeMs = 0;
+  let errorMessage = null;
+
   try {
-    const { connectionId, sql } = req.body;
+    // Adding 'prompt' to body so we can log the natural query in history
+    const { connectionId, sql, prompt } = req.body;
 
     if (!connectionId || !sql) {
       return res.status(400).json({ message: 'Connection ID and SQL query are required' });
@@ -65,8 +71,32 @@ const executeQueryEndpoint = async (req, res) => {
       return res.status(404).json({ message: 'Database connection not found' });
     }
 
-    // Execute the query via our secure engine
-    const result = await executeQuery(connection.db_type, connection.connection_string_encrypted, sql);
+    let result;
+    try {
+      // Execute the query via our secure engine
+      result = await executeQuery(connection.db_type, connection.connection_string_encrypted, sql);
+      success = true;
+      executionTimeMs = result.executionTimeMs;
+    } catch (engineError) {
+      success = false;
+      errorMessage = engineError.message;
+      throw engineError;
+    } finally {
+      // Always log history, whether successful or failed
+      try {
+        await QueryHistory.create({
+          user_id: req.user._id,
+          connection_id: connectionId,
+          natural_query: prompt || 'Unknown prompt / Direct execution',
+          generated_sql: sql,
+          execution_time_ms: executionTimeMs,
+          success,
+          error_message: errorMessage,
+        });
+      } catch (logError) {
+        console.error('Failed to log query history:', logError);
+      }
+    }
 
     res.status(200).json({
       success: true,
