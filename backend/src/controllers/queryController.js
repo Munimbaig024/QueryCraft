@@ -111,7 +111,24 @@ const executeQueryEndpoint = async (req, res) => {
   }
 };
 
+// @desc    Get user's query history
+// @route   GET /api/query/history
+// @access  Private
+const getQueryHistory = async (req, res) => {
+  try {
+    const history = await QueryHistory.find({ user_id: req.user._id })
+      .populate('connection_id', 'nickname db_type')
+      .sort({ created_at: -1 });
+
+    res.status(200).json({ success: true, count: history.length, data: history });
+  } catch (error) {
+    console.error('Fetch History Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve query history' });
+  }
+};
+
 module.exports = {
   generateQuery,
   executeQueryEndpoint,
+  getQueryHistory,
 };
