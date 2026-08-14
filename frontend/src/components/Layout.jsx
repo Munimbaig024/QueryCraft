@@ -1,7 +1,8 @@
 import React from 'react';
+import { Link, Outlet } from 'react-router-dom';
 import { Database, Search, History, Settings, LogOut } from 'lucide-react';
 
-const Layout = ({ children }) => {
+const Layout = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -13,22 +14,22 @@ const Layout = ({ children }) => {
           </h1>
         </div>
         <nav className="flex-1 px-4 space-y-2">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-brand-600 bg-brand-50 rounded-xl font-medium">
+          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3 text-brand-600 bg-brand-50 rounded-xl font-medium">
             <Search className="w-5 h-5" />
             Query
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
+          </Link>
+          <Link to="/connections" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
             <Database className="w-5 h-5" />
             Connections
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
+          </Link>
+          <Link to="/history" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
             <History className="w-5 h-5" />
             History
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
+          </Link>
+          <Link to="/settings" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors">
             <Settings className="w-5 h-5" />
             Settings
-          </a>
+          </Link>
         </nav>
         <div className="p-4 border-t border-gray-200">
           <button className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors w-full">
@@ -52,7 +53,7 @@ const Layout = ({ children }) => {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-8">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>

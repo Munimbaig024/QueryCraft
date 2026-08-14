@@ -1,17 +1,27 @@
-import React from 'react'
-import Layout from './components/Layout'
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Connections from './pages/Connections';
+import History from './pages/History';
 
 function App() {
   return (
-    <Layout>
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center text-center h-full">
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">Welcome to QueryCraft</h3>
-        <p className="text-gray-500 max-w-md">
-          Your base layout is ready! Navigate to the sidebar to manage databases, run natural language queries, and view past history.
-        </p>
-      </div>
-    </Layout>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        
+        {/* Protected Layout Routes */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="connections" element={<Connections />} />
+          <Route path="history" element={<History />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
