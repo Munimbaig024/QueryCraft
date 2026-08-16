@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Connections from './pages/Connections';
 import History from './pages/History';
+import Settings from './pages/Settings';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="connections" element={<Connections />} />
             <Route path="history" element={<History />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
       </Routes>
