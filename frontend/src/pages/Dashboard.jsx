@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Sparkles, Database, Play, Loader2 } from 'lucide-react';
+import { Sparkles, Database, Play, Loader2, Table } from 'lucide-react';
 
 const Dashboard = () => {
   const [connections, setConnections] = useState([]);
@@ -9,6 +9,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [generatedResult, setGeneratedResult] = useState(null); // { sql, visualization }
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Execution states
+  const [executionData, setExecutionData] = useState(null);
+  const [executing, setExecuting] = useState(false);
+  const [execTime, setExecTime] = useState(null);
 
   useEffect(() => {
     const fetchConnections = async () => {
@@ -32,6 +37,8 @@ const Dashboard = () => {
     setLoading(true);
     setErrorMsg('');
     setGeneratedResult(null);
+    setExecutionData(null);
+    setExecTime(null);
 
     try {
       const res = await api.post('/query/generate', {
@@ -52,10 +59,32 @@ const Dashboard = () => {
     }
   };
 
+  const handleExecute = async () => {
+    setExecuting(true);
+    setErrorMsg('');
+    
+    try {
+      const res = await api.post('/query/execute', {
+        connectionId: selectedConnection,
+        sql: generatedResult.sql,
+        prompt: prompt
+      });
+      
+      if (res.data.success) {
+        setExecutionData(res.data.data);
+        setExecTime(res.data.executionTimeMs);
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Execution failed');
+    } finally {
+      setExecuting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full gap-6">
       {/* Input Section */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-brand-500" />
@@ -83,19 +112,19 @@ const Dashboard = () => {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="E.g., Show me the total revenue grouped by month for the last year..."
-              className="w-full min-h-[120px] p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition resize-y text-gray-700"
+              className="w-full h-[100px] p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition resize-none text-gray-700"
             ></textarea>
             
             <div className="absolute bottom-4 right-4">
               <button
                 type="submit"
                 disabled={loading || !prompt.trim() || !selectedConnection}
-                className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Play className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5" />
                 )}
                 Generate SQL
               </button>
@@ -111,29 +140,99 @@ const Dashboard = () => {
       </div>
 
       {/* Output Section */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col overflow-hidden">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Generated SQL</h3>
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col min-h-0">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <Table className="w-5 h-5 text-brand-600" />
+          Results
+        </h3>
         
         {generatedResult ? (
-          <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-            <div className="bg-gray-900 rounded-xl p-4 overflow-auto">
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
+            {/* SQL Code Block */}
+            <div className="bg-gray-900 rounded-xl p-4 shrink-0 shadow-inner">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Generated SQL</span>
+                <span className="text-xs text-brand-400 bg-brand-400/10 px-2 py-1 rounded-md">
+                  Vis: {generatedResult.visualization}
+                </span>
+              </div>
               <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">
                 {generatedResult.sql}
               </pre>
             </div>
-            <div className="text-sm text-gray-500">
-              Recommended Visualization: <span className="font-semibold capitalize text-brand-600">{generatedResult.visualization}</span>
-            </div>
             
-            <div className="mt-auto">
-              <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-medium rounded-xl border border-gray-200 cursor-not-allowed">
-                Execute Query (Coming in next commit)
-              </button>
-            </div>
+            {/* Action Button */}
+            {!executionData && (
+              <div className="shrink-0">
+                <button 
+                  onClick={handleExecute}
+                  disabled={executing}
+                  className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-xl transition shadow-md flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {executing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" /> Executing Query...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5 fill-current" /> Execute Query
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Data Table */}
+            {executionData && (
+              <div className="flex-1 flex flex-col min-h-0 mt-2">
+                <div className="flex justify-between items-center mb-2 shrink-0">
+                  <h4 className="font-semibold text-gray-700 text-sm">Data Output</h4>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+                    Execution time: {execTime}ms
+                  </span>
+                </div>
+                
+                <div className="flex-1 overflow-auto border border-gray-200 rounded-xl shadow-inner">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-50 sticky top-0 shadow-sm">
+                      <tr>
+                        {executionData.length > 0 ? (
+                          Object.keys(executionData[0]).map((key) => (
+                            <th key={key} className="p-3 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                              {key}
+                            </th>
+                          ))
+                        ) : (
+                          <th className="p-3 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase">Result</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {executionData.length > 0 ? (
+                        executionData.map((row, i) => (
+                          <tr key={i} className="hover:bg-brand-50/50 transition-colors">
+                            {Object.values(row).map((val, j) => (
+                              <td key={j} className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                                {val !== null ? String(val) : <span className="text-gray-400 italic">null</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td className="p-8 text-center text-gray-500 italic">No rows returned from this query.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
-            Generated SQL will appear here
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
+            <Sparkles className="w-12 h-12 mb-3 text-gray-300" />
+            <p>Your generated SQL and results will appear here.</p>
           </div>
         )}
       </div>
