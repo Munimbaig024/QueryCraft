@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Sparkles, Database, Play, Loader2, Table } from 'lucide-react';
+import { Sparkles, Database, Play, Loader2, TableProperties, BarChart2 } from 'lucide-react';
+import DynamicChart from '../components/DynamicChart';
 
 const Dashboard = () => {
   const [connections, setConnections] = useState([]);
@@ -14,6 +15,7 @@ const Dashboard = () => {
   const [executionData, setExecutionData] = useState(null);
   const [executing, setExecuting] = useState(false);
   const [execTime, setExecTime] = useState(null);
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'chart'
 
   useEffect(() => {
     const fetchConnections = async () => {
@@ -73,6 +75,13 @@ const Dashboard = () => {
       if (res.data.success) {
         setExecutionData(res.data.data);
         setExecTime(res.data.executionTimeMs);
+        
+        // Auto-switch to chart view if the AI recommended one
+        if (generatedResult.visualization && generatedResult.visualization !== 'table') {
+          setViewMode('chart');
+        } else {
+          setViewMode('table');
+        }
       }
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Execution failed');
@@ -182,49 +191,73 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Data Table */}
+            {/* Data Table / Chart View */}
             {executionData && (
               <div className="flex-1 flex flex-col min-h-0 mt-2">
                 <div className="flex justify-between items-center mb-2 shrink-0">
-                  <h4 className="font-semibold text-gray-700 text-sm">Data Output</h4>
+                  <h4 className="font-semibold text-gray-700 text-sm flex items-center gap-2">
+                    Data Output
+                    {generatedResult.visualization !== 'table' && (
+                      <div className="flex bg-gray-100 rounded-lg p-0.5 ml-4">
+                        <button 
+                          onClick={() => setViewMode('table')}
+                          className={`px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1 transition ${viewMode === 'table' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                          <TableProperties className="w-3 h-3" /> Table
+                        </button>
+                        <button 
+                          onClick={() => setViewMode('chart')}
+                          className={`px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1 transition ${viewMode === 'chart' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                          <BarChart2 className="w-3 h-3" /> Chart
+                        </button>
+                      </div>
+                    )}
+                  </h4>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
                     Execution time: {execTime}ms
                   </span>
                 </div>
                 
-                <div className="flex-1 overflow-auto border border-gray-200 rounded-xl shadow-inner">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50 sticky top-0 shadow-sm">
-                      <tr>
+                <div className="flex-1 overflow-auto border border-gray-200 rounded-xl shadow-inner bg-white">
+                  {viewMode === 'table' ? (
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-gray-50 sticky top-0 shadow-sm z-10">
+                        <tr>
+                          {executionData.length > 0 ? (
+                            Object.keys(executionData[0]).map((key) => (
+                              <th key={key} className="p-3 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                {key}
+                              </th>
+                            ))
+                          ) : (
+                            <th className="p-3 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase">Result</th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
                         {executionData.length > 0 ? (
-                          Object.keys(executionData[0]).map((key) => (
-                            <th key={key} className="p-3 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                              {key}
-                            </th>
+                          executionData.map((row, i) => (
+                            <tr key={i} className="hover:bg-brand-50/50 transition-colors">
+                              {Object.values(row).map((val, j) => (
+                                <td key={j} className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                                  {val !== null ? String(val) : <span className="text-gray-400 italic">null</span>}
+                                </td>
+                              ))}
+                            </tr>
                           ))
                         ) : (
-                          <th className="p-3 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase">Result</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                      {executionData.length > 0 ? (
-                        executionData.map((row, i) => (
-                          <tr key={i} className="hover:bg-brand-50/50 transition-colors">
-                            {Object.values(row).map((val, j) => (
-                              <td key={j} className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                                {val !== null ? String(val) : <span className="text-gray-400 italic">null</span>}
-                              </td>
-                            ))}
+                          <tr>
+                            <td className="p-8 text-center text-gray-500 italic">No rows returned from this query.</td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td className="p-8 text-center text-gray-500 italic">No rows returned from this query.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        )}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="h-full min-h-[300px] p-6">
+                      <DynamicChart data={executionData} type={generatedResult.visualization} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
