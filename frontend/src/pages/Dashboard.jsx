@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Sparkles, Database, Play, Loader2, TableProperties, BarChart2 } from 'lucide-react';
+import { Sparkles, Database, Play, Loader2, TableProperties, BarChart2, Download } from 'lucide-react';
 import DynamicChart from '../components/DynamicChart';
 
 const Dashboard = () => {
@@ -88,6 +88,32 @@ const Dashboard = () => {
     } finally {
       setExecuting(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    if (!executionData || executionData.length === 0) return;
+    const headers = Object.keys(executionData[0]).join(',');
+    const rows = executionData.map(row => 
+      Object.values(row).map(val => `"${val}"`).join(',')
+    ).join('\n');
+    const csv = `${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'query_results.csv';
+    a.click();
+  };
+
+  const handleExportJSON = () => {
+    if (!executionData || executionData.length === 0) return;
+    const json = JSON.stringify(executionData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'query_results.json';
+    a.click();
   };
 
   return (
@@ -214,9 +240,25 @@ const Dashboard = () => {
                       </div>
                     )}
                   </h4>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
-                    Execution time: {execTime}ms
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={handleExportCSV}
+                        className="px-2 py-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded flex items-center gap-1 transition"
+                      >
+                        <Download className="w-3 h-3" /> CSV
+                      </button>
+                      <button 
+                        onClick={handleExportJSON}
+                        className="px-2 py-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded flex items-center gap-1 transition"
+                      >
+                        <Download className="w-3 h-3" /> JSON
+                      </button>
+                    </div>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md shadow-sm border border-gray-200">
+                      Execution time: {execTime}ms
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="flex-1 overflow-auto border border-gray-200 rounded-xl shadow-inner bg-white">
