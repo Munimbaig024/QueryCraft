@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Sparkles, Database, Play, Loader2, TableProperties, BarChart2, Download } from 'lucide-react';
 import DynamicChart from '../components/DynamicChart';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [connections, setConnections] = useState([]);
@@ -54,8 +55,11 @@ const Dashboard = () => {
           visualization: res.data.visualization
         });
       }
+      toast.success('SQL Generated Successfully!');
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to generate query. Please try again.');
+      const msg = err.response?.data?.message || 'Failed to generate query. Please try again.';
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -83,8 +87,11 @@ const Dashboard = () => {
           setViewMode('table');
         }
       }
+      toast.success('Query Executed Successfully!');
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Execution failed');
+      const msg = err.response?.data?.message || 'Execution failed';
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setExecuting(false);
     }
@@ -103,6 +110,7 @@ const Dashboard = () => {
     a.href = url;
     a.download = 'query_results.csv';
     a.click();
+    toast.success('Exported to CSV');
   };
 
   const handleExportJSON = () => {
@@ -114,6 +122,7 @@ const Dashboard = () => {
     a.href = url;
     a.download = 'query_results.json';
     a.click();
+    toast.success('Exported to JSON');
   };
 
   return (

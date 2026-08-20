@@ -8,10 +8,12 @@ import Connections from './pages/Connections';
 import History from './pages/History';
 import Settings from './pages/Settings';
 import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />

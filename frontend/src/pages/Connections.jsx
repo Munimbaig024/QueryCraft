@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Database, Plus, Trash2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Connections = () => {
   const [connections, setConnections] = useState([]);
@@ -40,9 +41,12 @@ const Connections = () => {
         connection_string: formData.connection_string
       });
       setTestStatus('success');
+      toast.success('Connection successful!');
     } catch (err) {
       setTestStatus('error');
-      setErrorMsg(err.response?.data?.message || 'Connection failed');
+      const msg = err.response?.data?.message || 'Connection failed';
+      setErrorMsg(msg);
+      toast.error(msg);
     }
   };
 
@@ -56,9 +60,12 @@ const Connections = () => {
       setFormData({ nickname: '', db_type: 'postgres', connection_string: '' });
       setTestStatus(null);
       fetchConnections();
+      toast.success('Connection saved successfully!');
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to save connection');
+      const msg = err.response?.data?.message || 'Failed to save connection';
+      setErrorMsg(msg);
       if (!testStatus) setTestStatus('error');
+      toast.error(msg);
     } finally {
       setFormLoading(false);
     }
@@ -69,8 +76,9 @@ const Connections = () => {
     try {
       await api.delete(`/connections/${id}`);
       fetchConnections();
+      toast.success('Connection deleted!');
     } catch (err) {
-      alert('Failed to delete connection');
+      toast.error('Failed to delete connection');
     }
   };
 
