@@ -43,7 +43,39 @@ const testConnection = async (req, res) => {
   }
 };
 
+// @desc    Get all connections for a user
+// @route   GET /api/connections
+// @access  Private
+const getConnections = async (req, res) => {
+  try {
+    const connections = await Connection.find({ user_id: req.user._id }).select('-connection_string_encrypted').sort('-created_at');
+    res.status(200).json({ success: true, count: connections.length, data: connections });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Delete a connection
+// @route   DELETE /api/connections/:id
+// @access  Private
+const deleteConnection = async (req, res) => {
+  try {
+    const connection = await Connection.findOne({ _id: req.params.id, user_id: req.user._id });
+    
+    if (!connection) {
+      return res.status(404).json({ success: false, message: 'Connection not found' });
+    }
+    
+    await connection.deleteOne();
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
 module.exports = {
   addConnection,
   testConnection,
+  getConnections,
+  deleteConnection,
 };

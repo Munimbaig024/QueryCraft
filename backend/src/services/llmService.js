@@ -22,9 +22,9 @@ const generateSQLFromPrompt = async (prompt, schemaContext) => {
         { role: 'system', content: systemMessage },
         { role: 'user', content: userMessage },
       ],
-      model: process.env.LLM_MODEL || 'qwen-2.5-32b-it',
+      model: process.env.LLM_MODEL || 'llama3-70b-8192',
       temperature: 0,
-      response_format: { type: 'json_object' },
+      max_tokens: 800,
     });
 
     const responseContent = chatCompletion.choices[0]?.message?.content;

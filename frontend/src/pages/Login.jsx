@@ -20,7 +20,7 @@ const Login = () => {
     setLoading(true);
 
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-    const payload = isLogin ? { email, password } : { name, email, password };
+    const payload = isLogin ? { email, password } : { username: name, email, password };
 
     try {
       const res = await fetch(endpoint, {

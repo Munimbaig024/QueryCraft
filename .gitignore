@@ -1,6 +1,22 @@
 node_modules/
-.env
 dist/
 build/
 *.log
 .DS_Store
+
+# Environment Variables
+.env
+.env.*
+commit_plan.md
+design.md
+!.env.example
+backend/.env
+frontend/.env
+
+# Local Databases
+*.db
+*.sqlite
+dummy.db
+
+# API Keys and Secrets
+groq_api_key.txt

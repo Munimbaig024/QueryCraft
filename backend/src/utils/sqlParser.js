@@ -24,7 +24,21 @@ const cleanSqlOutput = (rawSql) => {
  */
 const parseLlmResponse = (llmResponse) => {
   try {
-    const parsed = JSON.parse(llmResponse);
+    // 1. Strip <think> tags if present
+    let strippedResponse = llmResponse.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+    // 2. Clean markdown wrappers
+    let cleanedJsonStr = strippedResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    // 3. Forcefully extract the JSON object boundaries to ignore all conversational text
+    const jsonStart = cleanedJsonStr.indexOf('{');
+    const jsonEnd = cleanedJsonStr.lastIndexOf('}');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      cleanedJsonStr = cleanedJsonStr.substring(jsonStart, jsonEnd + 1);
+    }
+    
+    const parsed = JSON.parse(cleanedJsonStr);
     return {
       sql: cleanSqlOutput(parsed.sql),
       visualization: parsed.visualization || 'table',

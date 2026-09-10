@@ -1,5 +1,6 @@
 const { Client } = require('pg');
 const mysql = require('mysql2/promise');
+const sqlite3 = require('sqlite3').verbose();
 const { decrypt } = require('../utils/encryption');
 const { validateSqlQuery } = require('../utils/sqlValidator');
 
@@ -54,6 +55,30 @@ const executeMysql = async (connectionString, sqlQuery) => {
 };
 
 /**
+ * Executes query in a SQLite database
+ */
+const executeSqlite = async (connectionString, sqlQuery) => {
+  const dbPath = connectionString.replace(/^sqlite:\/\//, '');
+  const startTime = Date.now();
+  
+  return new Promise((resolve, reject) => {
+    const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
+      if (err) return reject(err);
+    });
+
+    db.all(sqlQuery, [], (err, rows) => {
+      db.close();
+      if (err) return reject(err);
+      
+      resolve({
+        data: rows,
+        executionTimeMs: Date.now() - startTime
+      });
+    });
+  });
+};
+
+/**
  * Main engine entry point for executing validated queries
  * @param {string} dbType 
  * @param {string} encryptedConnectionString 
@@ -70,6 +95,8 @@ const executeQuery = async (dbType, encryptedConnectionString, sqlQuery) => {
       return await executePostgres(connectionString, sqlQuery);
     case 'mysql':
       return await executeMysql(connectionString, sqlQuery);
+    case 'sqlite':
+      return await executeSqlite(connectionString, sqlQuery);
     default:
       throw new Error(`Execution engine currently does not support dynamic queries for ${dbType}`);
   }

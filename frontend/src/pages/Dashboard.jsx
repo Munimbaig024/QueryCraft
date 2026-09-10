@@ -69,8 +69,11 @@ const Dashboard = () => {
           sql: res.data.sql,
           visualization: res.data.visualization
         });
+        toast.success('SQL Generated Successfully!');
+        
+        // Auto-execute the query after generating
+        await handleExecute(res.data.sql, res.data.visualization);
       }
-      toast.success('SQL Generated Successfully!');
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to generate query. Please try again.';
       setErrorMsg(msg);
@@ -80,14 +83,19 @@ const Dashboard = () => {
     }
   };
 
-  const handleExecute = async () => {
+  const handleExecute = async (overrideSql = null, overrideVis = null) => {
+    const sqlToRun = overrideSql || generatedResult?.sql;
+    const visToRun = overrideVis || generatedResult?.visualization;
+    
+    if (!sqlToRun) return;
+
     setExecuting(true);
     setErrorMsg('');
     
     try {
       const res = await api.post('/query/execute', {
         connectionId: selectedConnection,
-        sql: generatedResult.sql,
+        sql: sqlToRun,
         prompt: prompt
       });
       
@@ -96,7 +104,7 @@ const Dashboard = () => {
         setExecTime(res.data.executionTimeMs);
         
         // Auto-switch to chart view if the AI recommended one
-        if (generatedResult.visualization && generatedResult.visualization !== 'table') {
+        if (visToRun && visToRun !== 'table') {
           setViewMode('chart');
         } else {
           setViewMode('table');
@@ -236,7 +244,7 @@ const Dashboard = () => {
                     Vis: {generatedResult.visualization}
                   </span>
                 </div>
-                <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">
+                <pre className="text-green-400 font-mono text-sm whitespace-pre overflow-x-auto overflow-y-auto max-h-60 custom-scrollbar pr-2 pb-2">
                   {generatedResult.sql}
                 </pre>
               </div>

@@ -5,7 +5,7 @@ QueryCraft is a powerful AI-driven web application that allows users to seamless
 ## Features
 
 - **Natural Language to SQL**: Simply type what you want (e.g., "Show me the top 5 customers by revenue"), and the AI (powered by Groq and Qwen) will generate the secure SQL query.
-- **Multi-Database Support**: Connect and manage multiple databases securely. Supported types: PostgreSQL and MySQL.
+- **Multi-Database Support**: Connect and manage multiple databases securely. Supported types: PostgreSQL, MySQL, and SQLite.
 - **Dynamic Visualization**: Automatically generates beautiful Bar, Line, or Pie charts using Recharts based on the AI's intelligent recommendation of the data structure.
 - **Secure Execution**: A built-in SQL AST validator ensures that only read-only `SELECT` queries are executed, protecting your databases from accidental destructive operations (DROP, DELETE, UPDATE).
 - **Query History**: Automatically tracks all your past prompts, generated SQL, execution times, and success/error rates so you can easily reference them later.
@@ -26,7 +26,7 @@ QueryCraft is a powerful AI-driven web application that allows users to seamless
 - MongoDB & Mongoose (for user data, connections, and query history)
 - Groq SDK (LLM Engine)
 - Node SQL Parser (for AST security validation)
-- pg & mysql2 (Database drivers)
+- pg, mysql2, sqlite3 (Database drivers)
 - JSON Web Tokens (JWT) & bcryptjs (for authentication)
 - Jest & Supertest (Testing)
 
@@ -76,6 +76,7 @@ ENCRYPTION_KEY=12345678901234567890123456789012
 
 # AI Engine
 GROQ_API_KEY=gsk_your_groq_api_key_here
+LLM_MODEL=qwen/qwen3.6-27b
 ```
 
 Start the backend server:
@@ -101,12 +102,17 @@ npm run dev
 ### 4. Running the Application
 1. Visit [http://localhost:5173](http://localhost:5173) in your browser.
 2. Create an account via the Registration toggle on the login page.
-3. Navigate to **Connections**. Add your PostgreSQL or MySQL database connection string.
+3. (Optional) Run the dummy database seeder in the root folder to create a test SQLite database:
+   ```bash
+   node seed_dummy.js
+   ```
+4. Navigate to **Connections**. Add your PostgreSQL, MySQL, or SQLite database connection string.
    - *Example Postgres:* `postgresql://username:password@localhost:5432/my_database`
    - *Example MySQL:* `mysql://username:password@localhost:3306/my_database`
+   - *Example SQLite (Dummy):* `sqlite://e:/Portfolio/Projects/QueryCraft/dummy.db`
    - Click "Test Connection" to ensure QueryCraft can reach it.
-4. Go to **Query**, select your database, and type a question in plain English.
-5. Generate the SQL, execute it, and view your dynamic charts!
+5. Go to **Query**, select your database, and type a question in plain English.
+6. Generate the SQL, execute it, and view your dynamic charts!
 
 ## Running Tests
 To run the backend unit and integration test suites:
